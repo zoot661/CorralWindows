@@ -23,8 +23,10 @@ the MSVC v143 toolset and a Windows 10/11 SDK. No external packages are needed.
 This initial project targets x64.
 
 Open `CorralWindows.sln`, select **Debug / x64** or **Release / x64**, and build.
-Use **Ctrl+F5** to run with the console kept open, or run the executable from
-a terminal.
+Run the executable from Visual Studio or a terminal. When both input and output
+are connected to a console, it displays **Press any key to exit...** after the
+results or an error. Pressing a key closes the application without changing its
+exit code. Redirected or non-interactive runs exit automatically.
 
 Alternatively, in a Visual Studio Developer PowerShell or Developer Command Prompt:
 
@@ -76,10 +78,25 @@ import for the build invocation, and removing duplicate environment variable
 names from the child build process. The ordinary Developer Command Prompt
 invocation above remains to be checked outside that session.
 
-A Debug run returned exit code 1 with `Find desktop view failed (HRESULT
-0x80070005)` (access denied). This verified the error report, but enumeration
-of real desktop items, Unicode output, positions and the empty-view case still
-need the interactive manual checks above.
+A Debug run in the restricted Codex session returned exit code 1 with
+`Find desktop view failed (HRESULT 0x80070005)` (access denied). After adding
+the exit prompt, Debug and Release builds passed without compiler warnings.
+A console run displayed the prompt, waited for a key and retained exit code 1;
+a non-interactive run exited automatically.
+
+Rob then verified the application in his interactive desktop session:
+
+- Both runs printed 65 desktop items, including Recycle Bin.
+- Non-ASCII names such as `ModusToolbox™` displayed correctly in console output.
+- After manually moving `New Microsoft Word Document.docx`, its position changed
+  from `(2091, 737)` to `(1171, 149)`; the other 64 items retained their positions.
+- Enumeration order changed between runs, so row order must not be treated as
+  item identity in future comparisons.
+- The exit prompt appeared and waited for a key (confirmed by Rob).
+
+Unicode output redirected to a file, an empty desktop view and multiple-monitor
+or DPI scenarios remain unverified. The ordinary Developer Command Prompt build
+invocation also remains unverified in this record.
 
 API references: [FindWindowSW](https://learn.microsoft.com/en-us/windows/win32/api/exdisp/nf-exdisp-ishellwindows-findwindowsw),
 [IFolderView::Items](https://learn.microsoft.com/en-us/windows/win32/api/shobjidl_core/nf-shobjidl_core-ifolderview-items),

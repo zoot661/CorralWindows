@@ -7,6 +7,7 @@
 #include <wrl/client.h>
 
 #include <fcntl.h>
+#include <conio.h>
 #include <io.h>
 #include <cstdio>
 #include <iomanip>
@@ -51,6 +52,21 @@ namespace
                    << std::setfill(L'0') << static_cast<unsigned long>(result)
                    << L").\n";
         return 1;
+    }
+
+    void WaitForExitKey()
+    {
+        DWORD inputMode  = 0;
+        DWORD outputMode = 0;
+        if (!GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &inputMode) ||
+            !GetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), &outputMode))
+        {
+            return;
+        }
+
+        std::wcout << L"\nPress any key to exit..." << std::flush;
+        _getwch();
+        std::wcout << L"\n";
     }
 
     HRESULT FindDesktopView(ComPtr<IFolderView>& folderView)
@@ -198,10 +214,9 @@ int wmain()
     }
 
     ComApartment apartment;
-    if (FAILED(apartment.result))
-    {
-        return ReportError(L"Initialize COM", apartment.result);
-    }
-
-    return PrintDesktopItems();
+    const int exitCode = FAILED(apartment.result)
+        ? ReportError(L"Initialize COM", apartment.result)
+        : PrintDesktopItems();
+    WaitForExitKey();
+    return exitCode;
 }
